@@ -1,3 +1,6 @@
-[submodule "memorial-latex"]
-	path = memorial-latex
+[submodule "submodules/memorial-latex"]
+	path = submodules/memorial-latex
 	url = https://github.com/trombonehero/memorial-latex
+[submodule "submodules/EBGaramond12"]
+	path = submodules/EBGaramond12
+	url = https://github.com/octaviopardo/EBGaramond12
