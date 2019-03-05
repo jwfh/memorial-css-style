@@ -34,7 +34,7 @@
 \usepackage[
 	margin=1.75in, 
 ]{geometry}
-\usepackage{mathptmx}
+\usepackage{metalogo}
 \def\pkg#1{{\sffamily #1}}
 \usepackage{enumitem}
 \setenumerate[1]{label=(\arabic*)}
@@ -52,6 +52,9 @@
 % \DoNotIndex{\@ne}
 % \DoNotIndex{\advance,\begingroup,\catcode,\closein}
 % \DoNotIndex{\closeout,\day,\def,\edef,\else,\empty,\endgroup}
+% \DoNotIndex{\newcommand,\newenvironment,\!,\@empty,\@gobble,\@gobbletwo}
+% \DoNotIndex{\@ifpackageloaded,\@ifpackagewith,\@ifundefined,\@namedef}
+% \DoNotIndex{\@nil,\@onlypreamble,\@tempa,\@tempb,\@tempswafalse,\def}
 %
 % \CheckSum{0}
 %
@@ -66,11 +69,11 @@
 % \tableofcontents
 % \par\vskip1pc\hrule
 %
-% \section{Motivation}
+% \section*{Motivation}
 % This \LaTeXe\ package is provided free of charge (and without any warranty of fitness or merchantability) 
 % to members of the Computer Science Society at Memorial University of Newfoundland. The goal of this 
-% package is to enable consistent-looking documents to be produced by anyone within the society and to
-% promote the society's brand through such recurring shapes, colours, and typefaces.
+% package is to enable uniform-looking documents to be produced by anyone within the society and to
+% promote the society's brand through the use of consistent colors, typefaces, and shapes in all publications.
 %
 % \section{Usage}
 % Informally, I've used the word ``package'' when referring to this collection of \TeX\ code without explaining 
@@ -78,22 +81,30 @@
 % is the \pkg{memorial-css} package --- is comprised of one \LaTeXe\ class file, |memorial-css.cls|, as well as an
 % array of style files (which have a |.sty| file extension).
 %
-% To use this package in a document, you must use the |memorial-css| document class; at the current time it is 
-% not supported to use internal package style files as their package at this point, though it may be a future 
+% To use this package in a document, you must use the \pkg{memorial-css} document class; at the current time it is 
+% not supported to use the package's internal style files as standalone packages, though it may be a future 
 % feature. That is, your document should begin with |\documentclass[...]{memorial-css}|. Following this, you may 
-% load packages as you normally would using the |\usepackage{package}| control sequence.
+% load standard packages such as \pkg{amsmath} as you normally would using the |\usepackage{package}| 
+% control sequence.
 % 
 % Options passed to the class will be the preferred method of choosing a document style (code night project,
 % letterhead, etc.). See the implementation below for more details. 
 %
 % ^^A TODO -  Add  more documentation about the different class options.
 %
-% \section{Implementation}
+% \section{Class Implementation}
 % We begin with standard class/package boilerplate code:
 %    \begin{macrocode}
 \NeedsTeXFormat{LaTeX2e}
-%<class>\ProvidesClass{memorial-css}	
-%<fontPackage>\ProvidesPackage{memorial-css-fonts}
+
+%<class>\ProvidesClass{memorial-css}[2019/03/05 Memorial 
+%<class>    University Computer Science Society Brand Style]
+%<font>\ProvidesPackage{memorial-css-fonts}[2019/03/05 Memorial 
+%<font>    University Computer Science Society Brand Fonts]
+%<logo>\ProvidesPackage{memorial-css-logo}[2019/03/05 Memorial 
+%<logo>    University Computer Science Society Brand Logotype]
+%<layout>\ProvidesPackage{memorial-css-layout}[2019/03/05 Memorial 
+%<layout>    University Computer Science Society Brand Layouts]
 %    \end{macrocode}
 
 
@@ -104,9 +115,16 @@
 % \begin{enumerate}
 %	\item Monochrome (|bw|) --- Sets the document to be monochrome (black and  white) only; monochromatic 
 % 	logos are used
-% 	\item Accurate typefaces (|font|) --- Uses Avenir and Adobe Garamond Pro rather than Lato and EB 
-% 	Garamond. This option requires that you have the appropriate font files in the same directory as your 
-%	\TeX\ source file.
+% 	\item Accurate typefaces 
+%	\begin{enumerate}
+%		\item Adobe Garamond Pro (|garamond|) --- Uses external font files for Adobe Garamond Pro instead 
+%		of EB Garamond in CTAN.
+%		\item Avenir (|avenir|) --- Uses external font files for Avenir instead of Montserrat in CTAN.
+%		\item All (|font|) --- Uses both Avenir and Adobe Garamond Pro rather than Montserrat and EB Garamond. 
+%	\end{enumerate}
+%	This set of options requires that you have the appropriate font files in the same directory as your document.
+%	Moreover, using any of the three options above will restrict compiler choices to \XeLaTeX\ and \LuaLaTeX.
+% 	\LuaLaTeX\ should be the preferred choice in most cases.
 %	\item Letterhead (|letterhead|) --- Enables branding options to create a formal letterhead with the society logo
 % 	and contact information.
 % 	\item Code Night (|codenight|) --- Enables branding  optinos to create an inviting handout for code night projects.
@@ -124,26 +142,37 @@
 %    \end{macrocode}
 %
 % \subsubsection{Accurate Typefaces}
-% By default, look-alike free fonts Lato and EB Garamond will be used instead of licensed fonts Avenir and 
-% Adobe Garamond Pro. If the user has access to these two typefaces and would like to substitute them into their
-% document, they may to so by providing the |font| option. As before, this sets an {\em if} variable to {\sc true}.
+% By default, look-alike free fonts Montserrat and EB Garamond will be used instead of licensed fonts Avenir and 
+% Adobe Garamond Pro. Both of these are included in CTAN.
+% If the user has access to the Avenir and Adobe Garamond Pro typefaces and would like to substitute them into their
+% document, they may to so by providing the |avenir| option for Avenir, |garamond| option for Adobe Garamond 
+% Pro, or the |font| option for both. Note that providing |font| is the same as providing both |avenir| and 
+% |garamond| separately. As before, this sets an {\em if} variable to {\sc true}.
 %    \begin{macrocode}
-\newif\if@fonts
-\@fontsfalse
-\DeclareOption{fonts}{\@fontstrue}
+\newif\if@avenirfont
+\@avenirfontfalse
+\DeclareOption{avenir}{
+    \@avenirfonttrue}
+
+\newif\if@garamondfont
+\@garamondfontfalse
+\DeclareOption{garamond}{
+    \@garamondfonttrue}
+
+\DeclareOption{font}{%
+    \@avenirfonttrue
+    \@garamondfonttrue}
 %    \end{macrocode}
-%
+
 % This boolean value will be used farther into the class file when deciding which options ought to be  passed to the 
 % \pkg{memorial-css-fonts} package.
 %
-% As we are performing somewhat non-trivial operations with non-\TeX-default fonts, this documents produced 
-% using the \pkg{memorial-css} class will need to be compiled with Lua\LaTeX.
+% At this point I would like to reiterate that providing any combination of the three options above will require 
+% your document to be compiled with \XeLaTeX\ or \LuaLaTeX\ --- pdf\LaTeX\ and \LaTeX\ will not work. In most
+% cases, it is preferred to use \LuaLaTeX.
 %
-% \subsubsection{Letterhead and Code Night}
-% I predict that there will be a lot more layouts added than just these two. Therefore, an effort has been made to 
-% construct a layout-management system that is flexible and easily expanded upon.
-%
-% First, define a counter |\@layoutno| and assign it the value 0. This will be the default case. 
+% \subsubsection{Document Layout}
+% First, we declare a counter |\@layoutno| and assign it the value 0. This will be the default case. 
 %    \begin{macrocode}
 \newcount\@layoutno
 \@layoutno=0
@@ -154,7 +183,10 @@
 %    \begin{macrocode}
 \DeclareOption{letterhead}{\@layoutno=1\relax}
 \DeclareOption{codenight}{\@layoutno=2\relax}
+\DeclareOption{memo}{\@layoutno=3\relax}
 %    \end{macrocode}
+
+%
 %
 % \DeleteShortVerb{\|}
 % \begin{table}
@@ -162,34 +194,186 @@
 % 	\begin{tabular}{p{1in}p{3in}} \hline 
 % 		\raggedright
 %		\textbf{Class Option} & \textbf{Purpose} \\ \hline 
-% 		{\tt bw} & Monochrome output \\ 
-% 		{\tt font} & Enable MUN brand standard-compliant typefaces \\ 
 % 		{\tt letterhead} & Defines commands specific to a letter; custom layout \\ 
-% 		{\tt codenight} & Defines commands specific to Code Night handours; custom layout \\ 
+% 		{\tt codenight} & Defines commands specific to Code Night handouts; custom layout \\ 
+% 		{\tt memo} & Defines commands specific to memos, such as meeting minutes; uses a custom layout \\ 
 %		\hline 
 % 	\end{tabular}
-%	\caption{Class Option Summary\label{tab:cls-ops}}
+%	\caption{Class Layout Option Summary\label{tab:cls-layout-ops}}
 % \end{table}
 % \MakeShortVerb{\|}
 %
+% \subsubsection{Document Drafts}
+% The package will support production of draft documents using a |draft| option. When this option is provided
+% to the package, an {\em if} variable |\if@draft| will be set to {\sc true}. Otherwise it will  be {\sc false}. 
+%    \begin{macrocode}
+\newif\if@draft
+\@draftfalse
+\DeclareOption{draft}{
+    \@drafttrue}
+%    \end{macrocode}
+
+%
+% When the \pkg{memorial-css-layout} package is included, it will be given the |draft| option if, and only if, |draft| was
+% provided when specifying this document class. This will have  the result of 
+% \begin{enumerate}
+%	\item Adding a six point rule to overfull |\hbox|es to help typesetters to find offending boxes.
+%	\item Watermarking each page in the outside page margin stating that the document is a draft and should not be
+% 	distributed.
+% \end{enumerate}
+%
+%
 % \subsubsection{Additional Options}
 % All additional options passed to the class have no affect on \pkg{memorial-css}, however, they may be used to 
-% influence the behaviour of the underlying class: \pkg{article}.
+% influence the behaviour of the underlying class which is \pkg{article}.
 %    \begin{macrocode}
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
-\ProcessOptions\relax 
+\ProcessOptions*\relax
 \LoadClass[11pt, letterpaper]{article}
 %</class>
 %    \end{macrocode}
 %
-% \subsection{Package Operations}
+% \subsection{Package Selection}
+% We use the boolean {\em if} variables |\if@avenirfont| and |\if@garamondfont| to determine which options to 
+% pass to the inclusion of the \pkg{memorial-css-fonts} package (See Section~\ref{sec:font})
+%    \begin{macrocode}
+\if@avenirfont
+    \if@garamondfont
+        \RequirePackage[avenir, garamond]{memorial-css-fonts}
+    \else 
+        \RequirePackage[avenir]{memorial-css-fonts}
+    \fi 
+\else 
+    \if@garamondfont
+        \RequirePackage[garamond]{memorial-css-fonts}
+    \else 
+        \RequirePackage{memorial-css-fonts}
+    \fi 
+\fi 
+%    \end{macrocode}
+% 
 %
 %
 %
 %
+%
+%
+%
+%
+% \section{Font Selection}\label{sec:font}
+% This section discusses the \pkg{memorial-css-fonts} style file. This file's purpose is solely to include packages
+% for CTAN-included fonts (the default behaviour) or, if options |avenir| or |garamond| are given, to include 
+% \pkg{fontspec} and load the respective font files. 
+%
+% As use of |avenir| and |garamond| includes \pkg{fontspec}, these options will require the document be 
+% compiled with \XeLaTeX\ or \LuaLaTeX. Generally we recommend to use \LuaLaTeX\ over \XeLaTeX.
+%    \begin{macrocode}
+%<*font>
+\newif\if@avenirfont
+\@avenirfontfalse
+\DeclareOption{avenir}{
+    \@avenirfonttrue}
+
+\newif\if@garamondfont
+\@garamondfontfalse
+\DeclareOption{garamond}{
+    \@garamondtrue}
+%    \end{macrocode}
+%
+% Then, a series of {\em if}s are used to load the appropriate fonts. First, we check to see if {\em either} 
+% |avenir| or |garamond| are selected. If so then we include \pkg{fontspec}. As we do not want to include this
+% package twice in the event that both options are given, we declare third {\em if} variable |\if@usefontspec|.
+%    \begin{macrocode}
+\newif\if@usefontspec
+\@usefontspecfalse
+\if@avenirfont
+    \@usefontspectrue
+\fi
+\if@garamondfont
+    \@usefontspectrue
+\fi 
+%    \end{macrocode}
+% This is acceptable because making a {\sc true} variable {\sc true} again is okay, but loading a package twice may 
+% cause unpredictable errors for some users.
+%
+% Then if this variable is indeed {\sc true}, load \pkg{fontspec}.
+%    \begin{macrocode}
+\if@usefontspec
+    \RequirePackage{fontspec}
+\fi
+%    \end{macrocode}
+%
+% Now that prerequisite packages are loaded, fonts are included.
+%
+%    \begin{macrocode}
+\if@garamondfont
+
+\else 
+    \usepackage{ebgaramond}
+\fi 
+\if@avenirfont
+    
+\else 
+    \usepackage[light, lining]{montserrat}
+\fi 
+%    \end{macrocode}
+% 
+% This takes care of typesetting text in the our preferred font. It remains to set up math mode fonts.
+%
+%
+%
+%
+%
+%
+%
+%
+% \section{Brand Colours}
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+% \eject
 ^^A% %%% END OF DOC!
 %    \begin{macrocode}
-%<*fonts>
+%<*font>
 \RequirePackage{xparse}
 \sys_if_engine_luatex:T
 {
@@ -202,6 +386,6 @@
     "lualatex" instead~ of~ "latex",~ "pdflatex",~ or~ "xelatex".
 }
 \msg_fatal:nn {memorial-css-fonts} {cannot-use-pdftex-xetex}
-%</fonts>
+%</font>
 %    \end{macrocode}
-%
+% \eject
