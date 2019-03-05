@@ -1,0 +1,207 @@
+
+% \iffalse meta-comment
+%
+% Copyright (C) 2019 by Jacob William House <jacob@jacobhouse.ca>
+% -----------------------------------------------------------
+%
+% This file may be distributed and/or modified under the conditions of
+% the LaTeX Project Public License, either version 1.3c of this license
+% or (at your option) any later version. The latest version of this
+% license is in:
+%
+% http://www.latex-project.org/lppl.txt
+%
+% and version 1.3c or later is part of all distributions of LaTeX
+% version 2006/05/20 or later.
+%
+% \fi
+%
+% \iffalse
+%<*driver>
+\ProvidesFile{memorial-css.dtx}
+%</driver>
+%<package>\NeedsTeXFormat{LaTeX2e}[2003/12/01]
+%<package>\ProvidesPackage{mypackage}
+%<*package>
+[2019/03/04 Memorial University Computer Science Society Brand Style]
+%</package>
+%
+%<*driver>
+\documentclass[letterpaper]{ltxdoc}
+\EnableCrossrefs
+\CodelineIndex
+\RecordChanges
+\usepackage[
+	margin=1.75in, 
+]{geometry}
+\usepackage{mathptmx}
+\def\pkg#1{{\sffamily #1}}
+\usepackage{enumitem}
+\setenumerate[1]{label=(\arabic*)}
+\setenumerate[2]{label=(\alph*)}
+\setenumerate[3]{label=(\roman*)}
+\begin{document}
+	\DocInput{memorial-css.dtx}
+\PrintChanges
+	\PrintIndex
+\end{document}
+%</driver>
+% \fi
+%
+% \DoNotIndex{\#,\$,\%,\&,\@,\\,\{,\},\^,\_,\~,\ }
+% \DoNotIndex{\@ne}
+% \DoNotIndex{\advance,\begingroup,\catcode,\closein}
+% \DoNotIndex{\closeout,\day,\def,\edef,\else,\empty,\endgroup}
+%
+% \CheckSum{0}
+%
+% \changes{v1.0}{2019/03/04}{Initial version}
+%
+%
+% \title{\bfseries\LaTeXe\ Implementation of MUN Computer Science Society 
+%	Brand Styles\\\vskip1pc \pkg{memorial-css}}
+% \author{Jacob William House \\ \url{jwhouse@mun.ca}}
+% \maketitle
+% \hrule
+% \tableofcontents
+% \par\vskip1pc\hrule
+%
+% \section{Motivation}
+% This \LaTeXe\ package is provided free of charge (and without any warranty of fitness or merchantability) 
+% to members of the Computer Science Society at Memorial University of Newfoundland. The goal of this 
+% package is to enable consistent-looking documents to be produced by anyone within the society and to
+% promote the society's brand through such recurring shapes, colours, and typefaces.
+%
+% \section{Usage}
+% Informally, I've used the word ``package'' when referring to this collection of \TeX\ code without explaining 
+% the nature of the code's structure. Allow me to try the remix. This collection of code --- all of which, together, 
+% is the \pkg{memorial-css} package --- is comprised of one \LaTeXe\ class file, |memorial-css.cls|, as well as an
+% array of style files (which have a |.sty| file extension).
+%
+% To use this package in a document, you must use the |memorial-css| document class; at the current time it is 
+% not supported to use internal package style files as their package at this point, though it may be a future 
+% feature. That is, your document should begin with |\documentclass[...]{memorial-css}|. Following this, you may 
+% load packages as you normally would using the |\usepackage{package}| control sequence.
+% 
+% Options passed to the class will be the preferred method of choosing a document style (code night project,
+% letterhead, etc.). See the implementation below for more details. 
+%
+% ^^A TODO -  Add  more documentation about the different class options.
+%
+% \section{Implementation}
+% We begin with standard class/package boilerplate code:
+%    \begin{macrocode}
+\NeedsTeXFormat{LaTeX2e}
+%<class>\ProvidesClass{memorial-css}	
+%<fontPackage>\ProvidesPackage{memorial-css-fonts}
+%    \end{macrocode}
+
+
+%
+% \subsection{Class Options}
+% Next, some class options are declared. These are used to customize the appearance of the resultant document.
+% Valid options currently  include  
+% \begin{enumerate}
+%	\item Monochrome (|bw|) --- Sets the document to be monochrome (black and  white) only; monochromatic 
+% 	logos are used
+% 	\item Accurate typefaces (|font|) --- Uses Avenir and Adobe Garamond Pro rather than Lato and EB 
+% 	Garamond. This option requires that you have the appropriate font files in the same directory as your 
+%	\TeX\ source file.
+%	\item Letterhead (|letterhead|) --- Enables branding options to create a formal letterhead with the society logo
+% 	and contact information.
+% 	\item Code Night (|codenight|) --- Enables branding  optinos to create an inviting handout for code night projects.
+% \end{enumerate}
+%
+% \subsubsection{Monochrome}
+% An {\em if} variable is created: |\if@bw|. Whenever the class receives the |bw| option, this will be set to 
+% {\sc true}. Otherwise it will be {\sc false}. Later, we will use this value when assigning the font colours and 
+% choosing which EPS logo file to use in the document.
+%     \begin{macrocode}
+%<*class>
+\newif\if@bw
+\@bwfalse
+\DeclareOption{bw}{\@bwtrue}
+%    \end{macrocode}
+%
+% \subsubsection{Accurate Typefaces}
+% By default, look-alike free fonts Lato and EB Garamond will be used instead of licensed fonts Avenir and 
+% Adobe Garamond Pro. If the user has access to these two typefaces and would like to substitute them into their
+% document, they may to so by providing the |font| option. As before, this sets an {\em if} variable to {\sc true}.
+%    \begin{macrocode}
+\newif\if@fonts
+\@fontsfalse
+\DeclareOption{fonts}{\@fontstrue}
+%    \end{macrocode}
+%
+% This boolean value will be used farther into the class file when deciding which options ought to be  passed to the 
+% \pkg{memorial-css-fonts} package.
+%
+% As we are performing somewhat non-trivial operations with non-\TeX-default fonts, this documents produced 
+% using the \pkg{memorial-css} class will need to be compiled with Lua\LaTeX.
+%
+% \subsubsection{Letterhead and Code Night}
+% I predict that there will be a lot more layouts added than just these two. Therefore, an effort has been made to 
+% construct a layout-management system that is flexible and easily expanded upon.
+%
+% First, define a counter |\@layoutno| and assign it the value 0. This will be the default case. 
+%    \begin{macrocode}
+\newcount\@layoutno
+\@layoutno=0
+%    \end{macrocode}
+% Following this, we declare options for the different layouts we wish to support. Each will correspond to a unique 
+% integer number assigned to |\@layoutno|. A switch statement will later use this to pick which layout package to 
+% include.
+%    \begin{macrocode}
+\DeclareOption{letterhead}{\@layoutno=1\relax}
+\DeclareOption{codenight}{\@layoutno=2\relax}
+%    \end{macrocode}
+%
+% \DeleteShortVerb{\|}
+% \begin{table}
+% 	\centering
+% 	\begin{tabular}{p{1in}p{3in}} \hline 
+% 		\raggedright
+%		\textbf{Class Option} & \textbf{Purpose} \\ \hline 
+% 		{\tt bw} & Monochrome output \\ 
+% 		{\tt font} & Enable MUN brand standard-compliant typefaces \\ 
+% 		{\tt letterhead} & Defines commands specific to a letter; custom layout \\ 
+% 		{\tt codenight} & Defines commands specific to Code Night handours; custom layout \\ 
+%		\hline 
+% 	\end{tabular}
+%	\caption{Class Option Summary\label{tab:cls-ops}}
+% \end{table}
+% \MakeShortVerb{\|}
+%
+% \subsubsection{Additional Options}
+% All additional options passed to the class have no affect on \pkg{memorial-css}, however, they may be used to 
+% influence the behaviour of the underlying class: \pkg{article}.
+%    \begin{macrocode}
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{article}}
+\ProcessOptions\relax 
+\LoadClass[11pt, letterpaper]{article}
+%</class>
+%    \end{macrocode}
+%
+% \subsection{Package Operations}
+%
+%
+%
+%
+^^A% %%% END OF DOC!
+%    \begin{macrocode}
+%<*fonts>
+\RequirePackage{xparse}
+\sys_if_engine_luatex:T
+{
+    \endinput
+}
+\msg_new:nnn {memorial-css-fonts} {cannot-use-pdftex-xetex}
+{
+    The~ fontspec~ package~ requires~ LuaTeX.\\\\
+    You~ must~ change~ your~ typesetting~ engine~ to,~ e.g.,~
+    "lualatex" instead~ of~ "latex",~ "pdflatex",~ or~ "xelatex".
+}
+\msg_fatal:nn {memorial-css-fonts} {cannot-use-pdftex-xetex}
+%</fonts>
+%    \end{macrocode}
+%
