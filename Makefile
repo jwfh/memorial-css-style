@@ -1,29 +1,37 @@
-.SUFFIXES: .dtx .ins .dvi .ps .md .pdf .tex
+.SUFFIXES: .dtx .pdf .sty .cls .md 
 
-EXECUTABLES = \
-	latexmk \
-
-DTX= \
-     	memorial-css.dtx 
+PKG= \
+     	memorial-css
 
 OUTFILES= \
-	memorial-css.cls \
-	memorial-css-fonts.sty \
-	memorial-css-logos.sty \
-	memorial-css-layout.sty \
+	$(PKG).cls \
+	$(PKG)-fonts.sty \
+	$(PKG)-logos.sty \
+	$(PKG)-layouts.sty \
 
-FOUND := $(foreach exec,$(EXECUTABLES),\
-        $(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH")))
+all: source docs 
+
+source: \
+	$(OUTFILES)
 
 docs: \
-	memorial-css.pdf 
+	$(PKG).pdf 
 
-clean:
+clean: tidy
+	rm -f $(PKG).{cls,pdf}
+	rm -f $(PKG)-*.sty
+
+tidy:
+	rm -f *.{aux,fdb_latexmk,fls,glo,idx,ilg,ind,log,toc}
 
 .dtx.cls:
-	latex 
+	latex $(PKG).ins 
 
-.dtx.pdf: $(OUTFILES)
+.dtx.sty:
+	latex $(PKG).ins 
+
+.dtx.pdf: 
 	latexmk -pdf $<
-	# latexmk -c $<
+	makeindex -s gind.ist $(basename $<)
+	latexmk -pdf $<
 
